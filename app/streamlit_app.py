@@ -380,3 +380,5 @@ st.caption(
     "Air Quality Prediction & Pollution Risk Analysis System | "
     "Machine Learning + Streamlit"
 )
+
+# Streamlit deployment update
