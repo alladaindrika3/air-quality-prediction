@@ -5,12 +5,10 @@ import pandas as pd
 # =====================================================
 # BASE DIRECTORY
 # =====================================================
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-MODEL_PATH = os.path.join(BASE_DIR, "model", "air_quality_model.pkl")
-DATA_PATH = os.path.join(BASE_DIR, "dataset", "cleaned_air_quality.csv")
-
+MODEL_PATH = os.path.join(BASE_DIR, "model", "aqi_model.pkl")
+DATA_PATH = os.path.join(BASE_DIR, "cleaned_air_quality.csv")
 
 # =====================================================
 # LOAD MODEL + DATA
