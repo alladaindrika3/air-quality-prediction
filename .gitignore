@@ -1,0 +1,5 @@
+dataset/air_quality.csv
+__pycache__/
+*.pyc
+.venv/
+venv/
