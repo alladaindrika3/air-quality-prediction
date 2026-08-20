@@ -190,8 +190,7 @@ if page == "🔮 AQI Prediction":
 
     if st.button(
         "🔮 Predict AQI",
-        use_container_width=True,
-        type="primary"
+        width="stretch"
     ):
 
         input_data = pd.DataFrame({
@@ -271,7 +270,7 @@ elif page == "📊 Data Analysis":
                 "aqi_index"
             ]
         ].describe().round(2),
-        use_container_width=True
+        width="stretch"
     )
 
     st.subheader("AQI Category Distribution")
@@ -362,7 +361,7 @@ elif page == "🤖 Model Insights":
 
     st.dataframe(
         importance_df.round(4),
-        use_container_width=True
+        width="stretch"
     )
 
     st.success(
