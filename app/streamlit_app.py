@@ -1,28 +1,16 @@
-import streamlit as st
-import pandas as pd
-import joblib
 import os
-
-
-# =====================================================
-# PAGE CONFIG
-# =====================================================
-
-st.set_page_config(
-    page_title="Air Quality Prediction",
-    page_icon="🌍",
-    layout="wide"
-)
-
+import joblib
+import pandas as pd
 
 # =====================================================
-# PATHS
+# BASE DIRECTORY
 # =====================================================
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-MODEL_PATH = os.path.join(BASE_DIR, "..", "air_quality_model.pkl")
-DATA_PATH = os.path.join(BASE_DIR, "..", "cleaned_air_quality.csv")
+MODEL_PATH = os.path.join(BASE_DIR, "air_quality_model.pkl")
+DATA_PATH = os.path.join(BASE_DIR, "dataset", "cleaned_air_quality.csv")
+
 
 # =====================================================
 # LOAD MODEL + DATA
