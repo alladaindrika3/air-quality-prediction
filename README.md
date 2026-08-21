@@ -7,7 +7,7 @@ The project combines **Machine Learning, Python, Pandas, Scikit-learn, Joblib, a
 ## 🚀 Live Demo
 
 🔗 **Streamlit App:**
-PASTE_YOUR_STREAMLIT_APP_LINK_HERE
+https://air-quality-prediction-bu2djbk25qhcstsgecauyd.streamlit.app
 
 ---
 
