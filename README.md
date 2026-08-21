@@ -202,7 +202,7 @@ The application will open in your browser.
 The application is deployed using **Streamlit Cloud**.
 
 🔗 **Live Application:**
-PASTE_YOUR_STREAMLIT_APP_LINK_HERE
+https://github.com/alladaindrika3/air-quality-prediction.git
 
 🔗 **GitHub Repository:**
 https://github.com/alladaindrika3/air-quality-prediction
