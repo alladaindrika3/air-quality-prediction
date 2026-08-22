@@ -277,6 +277,17 @@ If you find this project useful, consider giving the repository a ⭐ on GitHub!
 ![Final Dashboard](screenshots/08_final_dashboard.png)
 
 
+### Model Performance
+
+The Air Quality Prediction model uses Linear Regression.
+
+- R² Score: 70.9%
+- Mean Absolute Error (MAE): 95.37
+- Mean Squared Error (MSE): 31,200.96
+
+The model achieved an R² score of approximately 70.9%, indicating that the model explains about 70.9% of the variance in the AQI values.
+
+
 ### 📌 Project Links
 
 **GitHub:**
