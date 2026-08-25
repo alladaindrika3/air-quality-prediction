@@ -7,7 +7,7 @@ The project combines **Machine Learning, Python, Pandas, Scikit-learn, Joblib, a
 ## 🚀 Live Demo
 
 🔗 **Streamlit App:**
-PASTE_YOUR_STREAMLIT_APP_LINK_HERE
+https://air-quality-prediction-bu2djbk25qhcstsgecauyd.streamlit.app
 
 ---
 
@@ -202,7 +202,7 @@ The application will open in your browser.
 The application is deployed using **Streamlit Cloud**.
 
 🔗 **Live Application:**
-PASTE_YOUR_STREAMLIT_APP_LINK_HERE
+https://air-quality-prediction-bu2djbk25qhcstsgecauyd.streamlit.app/
 
 🔗 **GitHub Repository:**
 https://github.com/alladaindrika3/air-quality-prediction
@@ -275,6 +275,17 @@ If you find this project useful, consider giving the repository a ⭐ on GitHub!
 ### 🖥️ 8. Final Dashboard
 
 ![Final Dashboard](screenshots/08_final_dashboard.png)
+
+
+### Model Performance
+
+The Air Quality Prediction model uses Linear Regression.
+
+- R² Score: 70.9%
+- Mean Absolute Error (MAE): 95.37
+- Mean Squared Error (MSE): 31,200.96
+
+The model achieved an R² score of approximately 70.9%, indicating that the model explains about 70.9% of the variance in the AQI values.
 
 
 ### 📌 Project Links
