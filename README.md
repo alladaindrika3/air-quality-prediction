@@ -430,11 +430,5 @@ The project provides a practical example of how Machine Learning can be integrat
 
 ````
 
-**Paste → `Ctrl + S` → terminal:**
 
-```bash
-git add README.md
-git commit -m "Update project README"
-git push origin main
-````
 
