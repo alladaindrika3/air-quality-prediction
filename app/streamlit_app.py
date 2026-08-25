@@ -3,6 +3,7 @@ import joblib
 import pandas as pd
 import streamlit as st
 from textwrap import dedent
+from tensorflow.keras.models import load_model as load_keras_model
 
 
 def render_html(content):
@@ -42,6 +43,18 @@ MODEL_PATH = os.path.join(
     "aqi_model.pkl"
 )
 
+ANN_MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "model",
+    "ann_model.keras"
+)
+
+ANN_SCALER_PATH = os.path.join(
+    BASE_DIR,
+    "model",
+    "ann_scaler.pkl"
+)
+
 DATA_PATH = os.path.join(
     BASE_DIR,
     "cleaned_air_quality.csv"
@@ -57,12 +70,24 @@ def load_model():
     return joblib.load(MODEL_PATH)
 
 
+@st.cache_resource
+def load_ann_model():
+    return load_keras_model(ANN_MODEL_PATH)
+
+
+@st.cache_resource
+def load_ann_scaler():
+    return joblib.load(ANN_SCALER_PATH)
+
+
 @st.cache_data
 def load_data():
     return pd.read_csv(DATA_PATH)
 
 
 model = load_model()
+ann_model = load_ann_model()
+ann_scaler = load_ann_scaler()
 df = load_data()
 
 
@@ -75,6 +100,12 @@ if "prediction" not in st.session_state:
 
 if "category" not in st.session_state:
     st.session_state.category = None
+
+if "rf_prediction" not in st.session_state:
+    st.session_state.rf_prediction = None
+
+if "ann_prediction" not in st.session_state:
+    st.session_state.ann_prediction = None
 
 
 # ============================================================
@@ -128,20 +159,41 @@ def get_category_description(category):
     return descriptions[category]
 
 
+def get_health_recommendation(category):
+
+    recommendations = {
+
+        "Good":
+            "Air quality is good. Outdoor activities are generally safe.",
+
+        "Satisfactory":
+            "Air quality is acceptable. Normal outdoor activities can continue.",
+
+        "Moderate":
+            "Sensitive individuals should consider limiting prolonged outdoor exposure.",
+
+        "Poor":
+            "Consider reducing prolonged outdoor activities and exposure.",
+
+        "Very Poor":
+            "Avoid prolonged outdoor exposure and consider staying indoors.",
+
+        "Severe":
+            "Avoid outdoor exposure as much as possible and follow local health guidance."
+    }
+
+    return recommendations[category]
+
+
 def get_category_emoji(category):
 
     emojis = {
 
         "Good": "☀️",
-
         "Satisfactory": "🌤️",
-
         "Moderate": "⛅",
-
         "Poor": "🌫️",
-
         "Very Poor": "🌁",
-
         "Severe": "⚠️"
     }
 
@@ -187,30 +239,34 @@ def get_category_colors(category):
 
 
 # ============================================================
-# CUSTOM CSS — AIRSENSE DAY / NIGHT SKY
+# APPEARANCE
 # ============================================================
 
-# Appearance selector
 with st.sidebar:
+
     appearance = st.radio(
         "🌈 APPEARANCE",
         ["☀️ Light", "🌙 Dark", "🖥️ System"],
         index=0
     )
 
+
 if appearance == "🌙 Dark":
     mode = "dark"
+
 elif appearance == "🖥️ System":
     mode = "system"
+
 else:
     mode = "light"
 
 
-# ------------------------------------------------------------
+# ============================================================
 # COLORS
-# ------------------------------------------------------------
+# ============================================================
 
 if mode == "dark":
+
     SKY1 = "#020617"
     SKY2 = "#0b1d36"
     SKY3 = "#102a43"
@@ -225,6 +281,7 @@ if mode == "dark":
     CITY2 = "#10233b"
 
 elif mode == "light":
+
     SKY1 = "#38bdf8"
     SKY2 = "#7dd3fc"
     SKY3 = "#e0f2fe"
@@ -239,6 +296,7 @@ elif mode == "light":
     CITY2 = "#547383"
 
 else:
+
     SKY1 = "#38bdf8"
     SKY2 = "#7dd3fc"
     SKY3 = "#e0f2fe"
@@ -253,14 +311,16 @@ else:
     CITY2 = "#547383"
 
 
-# ------------------------------------------------------------
-# MAIN SKY
-# ------------------------------------------------------------
+# ============================================================
+# CUSTOM CSS
+# ============================================================
 
 render_html(f"""
 <style>
 
-/* REMOVE DEFAULT STREAMLIT BACKGROUND */
+/* ==========================================================
+   MAIN BACKGROUND
+   ========================================================== */
 
 html,
 body,
@@ -270,15 +330,15 @@ body,
     background: transparent !important;
 }}
 
-
-/* ==========================================================
-   FULL SCREEN SKY
-   ========================================================== */
-
 [data-testid="stApp"] {{
     min-height: 100vh !important;
     overflow-x: hidden !important;
 }}
+
+
+/* ==========================================================
+   SKY
+   ========================================================== */
 
 [data-testid="stApp"]::before {{
 
@@ -333,9 +393,7 @@ body,
 
     pointer-events: none;
 
-    animation:
-        floatingSun 6s ease-in-out infinite;
-
+    animation: floatingSun 6s ease-in-out infinite;
 }}
 
 @keyframes floatingSun {{
@@ -347,12 +405,11 @@ body,
     50% {{
         transform: translateY(15px);
     }}
-
 }}
 
 
 /* ==========================================================
-   MOVING CLOUDS
+   CLOUDS
    ========================================================== */
 
 [data-testid="stMain"]::before {{
@@ -382,7 +439,6 @@ body,
 
     animation:
         cloudMove 45s linear infinite;
-
 }}
 
 @keyframes cloudMove {{
@@ -394,13 +450,8 @@ body,
     to {{
         transform: translateX(100vw);
     }}
-
 }}
 
-
-/* ==========================================================
-   SECOND CLOUD LAYER
-   ========================================================== */
 
 [data-testid="stMain"]::after {{
 
@@ -430,7 +481,6 @@ body,
 
     animation:
         cloudMove2 65s linear infinite;
-
 }}
 
 @keyframes cloudMove2 {{
@@ -442,15 +492,15 @@ body,
     to {{
         transform: translateX(110vw);
     }}
-
 }}
 
 
 /* ==========================================================
-   CITY AT BOTTOM
+   CITY BUILDINGS
+   LOW OPACITY
    ========================================================== */
 
-[data-testid="stApp"]::after {{
+[data-testid="stAppViewContainer"]::after {{
 
     content: "";
 
@@ -460,48 +510,42 @@ body,
     bottom: 0;
 
     width: 100vw;
-
-    height: 190px;
+    height: 155px;
 
     z-index: 2;
 
     pointer-events: none;
 
+    opacity: 0.28;
+
     background:
 
         linear-gradient({CITY1},{CITY1})
-        0% 100% / 7% 55% no-repeat,
+        0% 100% / 8% 55% no-repeat,
 
         linear-gradient({CITY2},{CITY2})
-        8% 100% / 8% 75% no-repeat,
+        10% 100% / 10% 80% no-repeat,
 
         linear-gradient({CITY1},{CITY1})
-        17% 100% / 6% 45% no-repeat,
+        22% 100% / 7% 45% no-repeat,
 
         linear-gradient({CITY2},{CITY2})
-        24% 100% / 10% 85% no-repeat,
+        31% 100% / 11% 75% no-repeat,
 
         linear-gradient({CITY1},{CITY1})
-        35% 100% / 8% 60% no-repeat,
+        45% 100% / 8% 58% no-repeat,
 
         linear-gradient({CITY2},{CITY2})
-        44% 100% / 12% 92% no-repeat,
+        56% 100% / 12% 90% no-repeat,
 
         linear-gradient({CITY1},{CITY1})
-        57% 100% / 7% 50% no-repeat,
+        70% 100% / 8% 50% no-repeat,
 
         linear-gradient({CITY2},{CITY2})
-        65% 100% / 10% 78% no-repeat,
+        80% 100% / 11% 78% no-repeat,
 
         linear-gradient({CITY1},{CITY1})
-        77% 100% / 8% 58% no-repeat,
-
-        linear-gradient({CITY2},{CITY2})
-        86% 100% / 9% 88% no-repeat,
-
-        linear-gradient({CITY1},{CITY1})
-        96% 100% / 6% 65% no-repeat;
-
+        93% 100% / 7% 60% no-repeat;
 }}
 
 
@@ -509,34 +553,41 @@ body,
    TREES
    ========================================================== */
 
-[data-testid="stAppViewContainer"]::after {{
+[data-testid="stApp"]::after {{
 
     content:
-        "🌳    🌲       🌳       🌲        🌳       🌲       🌳";
+        "🌳   🌲      🌳   🌲      🌳   🌲      🌳   🌲";
 
     position: fixed;
 
-    bottom: 115px;
+    left: 0;
+    bottom: 0;
 
-    left: -20px;
-
-    width: 110vw;
+    width: 100vw;
+    height: 105px;
 
     z-index: 3;
 
-    font-size: 43px;
+    pointer-events: none;
 
-    letter-spacing: 15px;
+    opacity: 0.45;
+
+    font-size: 40px;
+
+    letter-spacing: 18px;
 
     white-space: nowrap;
 
-    pointer-events: none;
+    display: flex;
 
+    align-items: flex-end;
+
+    padding-bottom: 5px;
 }}
 
 
 /* ==========================================================
-   DASHBOARD ABOVE BACKGROUND
+   CONTENT ABOVE BACKGROUND
    ========================================================== */
 
 [data-testid="stMainBlockContainer"] {{
@@ -544,11 +595,6 @@ body,
     position: relative !important;
 
     z-index: 10 !important;
-
-    background: transparent !important;
-
-    padding-bottom: 230px !important;
-
 }}
 
 
@@ -565,13 +611,11 @@ body,
 [data-testid="stMetricValue"] {{
 
     color: {TEXT} !important;
-
 }}
 
 [data-testid="stMetricLabel"] {{
 
     color: {MUTED} !important;
-
 }}
 
 
@@ -589,6 +633,10 @@ body,
     border:
         1px solid rgba(255,255,255,.30) !important;
 
+    border-radius: 18px;
+
+    padding: 22px;
+
     backdrop-filter: blur(16px);
 
     -webkit-backdrop-filter: blur(16px);
@@ -603,7 +651,6 @@ body,
 .glass-card p {{
 
     color: {TEXT} !important;
-
 }}
 
 
@@ -616,7 +663,6 @@ body,
     color: {TEXT} !important;
 
     background: {INPUT} !important;
-
 }}
 
 
@@ -635,13 +681,11 @@ body,
         ) !important;
 
     z-index: 100 !important;
-
 }}
 
 [data-testid="stSidebar"] * {{
 
     color: #f8fafc !important;
-
 }}
 
 
@@ -665,7 +709,126 @@ body,
     border-radius: 14px !important;
 
     font-weight: 700 !important;
+}}
 
+
+/* ==========================================================
+   SECTION TITLES
+   ========================================================== */
+
+.section-title {{
+
+    font-size: 22px;
+
+    font-weight: 800;
+
+    margin-top: 25px;
+
+    margin-bottom: 15px;
+
+    color: {TEXT};
+}}
+
+
+/* ==========================================================
+   AQI CARD
+   ========================================================== */
+
+.aqi-card {{
+
+    text-align: center;
+
+    margin-top: 25px;
+
+    margin-bottom: 20px;
+}}
+
+.aqi-number {{
+
+    font-size: 70px;
+
+    font-weight: 900;
+
+    line-height: 1.1;
+
+}}
+
+.aqi-label {{
+
+    font-size: 28px;
+
+    font-weight: 800;
+
+}}
+
+.aqi-description {{
+
+    margin-top: 10px;
+
+    font-size: 16px;
+
+    color: {MUTED};
+}}
+
+
+/* ==========================================================
+   AQI SCALE
+   ========================================================== */
+
+.aqi-scale {{
+
+    margin: 20px 0 30px 0;
+}}
+
+.scale-bar {{
+
+    position: relative;
+
+    height: 12px;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #16a34a 0%,
+            #eab308 20%,
+            #f97316 40%,
+            #ef4444 60%,
+            #9333ea 80%,
+            #374151 100%
+        );
+}}
+
+.scale-labels {{
+
+    display: flex;
+
+    justify-content: space-between;
+
+    font-size: 11px;
+
+    margin-top: 8px;
+
+    color: {MUTED};
+}}
+
+
+/* ==========================================================
+   FOOTER
+   ========================================================== */
+
+.footer {{
+
+    text-align: center;
+
+    margin-top: 45px;
+
+    padding: 25px;
+
+    color: {MUTED};
+
+    font-size: 14px;
 }}
 
 </style>
@@ -692,13 +855,11 @@ if mode == "system":
                     #0b1d36 50%,
                     #102a43 100%
                 ) !important;
-
         }
 
         [data-testid="stAppViewContainer"]::before {
 
             content: "🌙" !important;
-
         }
 
         [data-testid="stMainBlockContainer"] p,
@@ -709,13 +870,12 @@ if mode == "system":
         [data-testid="stMetricValue"] {
 
             color: #f8fafc !important;
-
         }
-
     }
 
     </style>
     """)
+
 
 # ============================================================
 # SIDEBAR
@@ -740,9 +900,8 @@ with st.sidebar:
             </p>
 
         </div>
-        """),
+        """)
     )
-
 
     page = st.radio(
         "NAVIGATION",
@@ -754,7 +913,6 @@ with st.sidebar:
         ]
     )
 
-
     render_html(
         dedent("""
         <div class="status-card">
@@ -764,8 +922,7 @@ with st.sidebar:
             </div>
 
             <div class="status-line">
-                <span class="online-dot"></span>
-                ML Model Online
+                🟢 ML Model Online
             </div>
 
             <div class="status-line">
@@ -777,9 +934,8 @@ with st.sidebar:
             </div>
 
         </div>
-        """),
+        """)
     )
-
 
     render_html(
         dedent("""
@@ -792,27 +948,17 @@ with st.sidebar:
             ML + Streamlit
 
         </div>
-        """),
+        """)
     )
 
 
 # ============================================================
-# HERO SECTION
+# HERO
 # ============================================================
 
 render_html(
     dedent("""
     <div class="hero">
-
-        <div class="sun"></div>
-
-        <div class="cloud cloud-one">
-            ☁️
-        </div>
-
-        <div class="cloud cloud-two">
-            ☁️
-        </div>
 
         <h1>
             AirSense AI
@@ -824,7 +970,7 @@ render_html(
         </p>
 
     </div>
-    """),
+    """)
 )
 
 
@@ -833,32 +979,26 @@ render_html(
 # ============================================================
 
 avg_aqi = df["aqi_index"].mean()
-
 max_aqi = df["aqi_index"].max()
-
 min_aqi = df["aqi_index"].min()
 
 
 m1, m2, m3, m4 = st.columns(4)
-
 
 m1.metric(
     "📊 Total Records",
     f"{len(df):,}"
 )
 
-
 m2.metric(
     "🌫️ Average AQI",
     f"{avg_aqi:.1f}"
 )
 
-
 m3.metric(
     "🔴 Maximum AQI",
     f"{max_aqi:.0f}"
 )
-
 
 m4.metric(
     "🟢 Minimum AQI",
@@ -872,17 +1012,22 @@ m4.metric(
 
 if page == "🔮 AQI Prediction":
 
+    model_choice = st.radio(
+        "🤖 Select Prediction Model",
+        ["🌲 Random Forest", "🧠 ANN"],
+        horizontal=True
+    )
+
     render_html(
-        '<div class="section-title">🌤️ Environmental Parameters</div>',
+        '<div class="section-title">🌤️ Environmental Parameters</div>'
     )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # WEATHER INPUTS
-    # --------------------------------------------------------
+    # ========================================================
 
     c1, c2, c3, c4 = st.columns(4)
-
 
     with c1:
 
@@ -893,7 +1038,6 @@ if page == "🔮 AQI Prediction":
             value=25.0
         )
 
-
     with c2:
 
         humidity = st.number_input(
@@ -903,7 +1047,6 @@ if page == "🔮 AQI Prediction":
             value=60
         )
 
-
     with c3:
 
         pressure = st.number_input(
@@ -912,7 +1055,6 @@ if page == "🔮 AQI Prediction":
             max_value=1200.0,
             value=1010.0
         )
-
 
     with c4:
 
@@ -924,17 +1066,15 @@ if page == "🔮 AQI Prediction":
         )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # POLLUTION INPUTS
-    # --------------------------------------------------------
+    # ========================================================
 
     render_html(
-        '<div class="section-title">🏭 Pollution Parameters</div>',
+        '<div class="section-title">🏭 Pollution Parameters</div>'
     )
 
-
     c1, c2, c3, c4 = st.columns(4)
-
 
     with c1:
 
@@ -944,7 +1084,6 @@ if page == "🔮 AQI Prediction":
             value=50.0
         )
 
-
     with c2:
 
         pm10 = st.number_input(
@@ -953,7 +1092,6 @@ if page == "🔮 AQI Prediction":
             value=80.0
         )
 
-
     with c3:
 
         co = st.number_input(
@@ -961,7 +1099,6 @@ if page == "🔮 AQI Prediction":
             min_value=0,
             value=500
         )
-
 
     with c4:
 
@@ -972,15 +1109,11 @@ if page == "🔮 AQI Prediction":
         )
 
 
-    st.write("")
-
-
-    # --------------------------------------------------------
+    # ========================================================
     # PREDICT BUTTON
-    # --------------------------------------------------------
+    # ========================================================
 
     b1, b2, b3 = st.columns([1, 2, 1])
-
 
     with b2:
 
@@ -995,33 +1128,66 @@ if page == "🔮 AQI Prediction":
         input_data = pd.DataFrame({
 
             "temp_c": [temp],
-
             "humidity": [humidity],
-
             "pressure_mb": [pressure],
-
             "windspeed_kph": [windspeed],
-
             "pm2_5": [pm25],
-
             "pm10": [pm10],
-
             "co": [co],
-
             "no2": [no2]
 
         })
 
 
-        prediction = model.predict(
+        # ----------------------------------------------------
+        # RANDOM FOREST
+        # ----------------------------------------------------
+
+        rf_prediction = model.predict(
             input_data
         )[0]
 
 
-        prediction = max(
-            0,
-            min(500, prediction)
+        # ----------------------------------------------------
+        # ANN
+        # ----------------------------------------------------
+
+        scaled_input = ann_scaler.transform(
+            input_data
         )
+
+        ann_prediction = ann_model.predict(
+            scaled_input,
+            verbose=0
+        )[0][0]
+
+
+        # ----------------------------------------------------
+        # LIMIT PREDICTIONS
+        # ----------------------------------------------------
+
+        rf_prediction = max(
+            0,
+            min(500, rf_prediction)
+        )
+
+        ann_prediction = max(
+            0,
+            min(500, ann_prediction)
+        )
+
+
+        # ----------------------------------------------------
+        # SELECTED MODEL
+        # ----------------------------------------------------
+
+        if model_choice == "🧠 ANN":
+
+            prediction = ann_prediction
+
+        else:
+
+            prediction = rf_prediction
 
 
         category = get_aqi_category(
@@ -1029,20 +1195,32 @@ if page == "🔮 AQI Prediction":
         )
 
 
+        # ----------------------------------------------------
+        # SAVE STATE
+        # ----------------------------------------------------
+
         st.session_state.prediction = prediction
 
         st.session_state.category = category
 
+        st.session_state.rf_prediction = rf_prediction
 
-    # --------------------------------------------------------
+        st.session_state.ann_prediction = ann_prediction
+
+
+    # ========================================================
     # SHOW RESULT
-    # --------------------------------------------------------
+    # ========================================================
 
     if st.session_state.prediction is not None:
 
         prediction = st.session_state.prediction
 
         category = st.session_state.category
+
+        rf_prediction = st.session_state.rf_prediction
+
+        ann_prediction = st.session_state.ann_prediction
 
         colors = get_category_colors(
             category
@@ -1053,14 +1231,14 @@ if page == "🔮 AQI Prediction":
         )
 
 
-        # ----------------------------------------------------
+        # ====================================================
         # MAIN AQI CARD
-        # ----------------------------------------------------
+        # ====================================================
 
         render_html(
             dedent(f"""
             <div class="aqi-card"
-                 style="border-top: 6px solid {colors['accent']};">
+                 style="border-top:6px solid {colors['accent']};">
 
                 <div style="
                     font-size:45px;
@@ -1099,13 +1277,13 @@ if page == "🔮 AQI Prediction":
                 </div>
 
             </div>
-            """),
-            )
+            """)
+        )
 
 
-        # ----------------------------------------------------
+        # ====================================================
         # AQI SCALE
-        # ----------------------------------------------------
+        # ====================================================
 
         marker_position = min(
             100,
@@ -1125,16 +1303,14 @@ if page == "🔮 AQI Prediction":
                     <div style="
                         position:absolute;
                         left:{marker_position}%;
+                        top:-5px;
                         transform:translateX(-50%);
-                        margin-top:-6px;
-                        width:24px;
-                        height:24px;
-                        background:white;
-                        border:4px solid #0f172a;
+                        width:14px;
+                        height:14px;
+                        background:{colors['accent']};
+                        border:3px solid white;
                         border-radius:50%;
-                        box-shadow:
-                            0 3px 10px
-                            rgba(0,0,0,0.25);
+                        box-shadow:0 2px 8px rgba(0,0,0,0.30);
                     ">
                     </div>
 
@@ -1143,27 +1319,22 @@ if page == "🔮 AQI Prediction":
                 <div class="scale-labels">
 
                     <span>Good</span>
-
                     <span>Satisfactory</span>
-
                     <span>Moderate</span>
-
                     <span>Poor</span>
-
                     <span>Very Poor</span>
-
                     <span>Severe</span>
 
                 </div>
 
             </div>
-            """),
-            )
+            """)
+        )
 
 
-        # ----------------------------------------------------
+        # ====================================================
         # SUMMARY CARDS
-        # ----------------------------------------------------
+        # ====================================================
 
         r1, r2, r3 = st.columns(3)
 
@@ -1187,8 +1358,8 @@ if page == "🔮 AQI Prediction":
                     </p>
 
                 </div>
-                """),
-                    )
+                """)
+            )
 
 
         with r2:
@@ -1223,8 +1394,8 @@ if page == "🔮 AQI Prediction":
                     </p>
 
                 </div>
-                """),
-                    )
+                """)
+            )
 
 
         with r3:
@@ -1242,17 +1413,102 @@ if page == "🔮 AQI Prediction":
                     </p>
 
                 </div>
-                """),
-                    )
+                """)
+            )
 
 
-        # ----------------------------------------------------
-        # POLLUTANT CHART
-        # ----------------------------------------------------
+        # ====================================================
+        # EXTRA FEATURE 1 — HEALTH RECOMMENDATION
+        # ====================================================
 
         render_html(
-            '<div class="section-title">📊 Current Input Analysis</div>',
-            )
+            dedent(f"""
+            <div class="glass-card"
+                 style="
+                 margin-top:20px;
+                 border-left:6px solid {colors['accent']};
+                 ">
+
+                <h3>
+                    🩺 Health Recommendation
+                </h3>
+
+                <p style="font-size:17px;">
+
+                    {get_health_recommendation(category)}
+
+                </p>
+
+            </div>
+            """)
+        )
+
+
+        # ====================================================
+        # EXTRA FEATURE 2 — MODEL COMPARISON
+        # ====================================================
+
+        if model_choice == "🧠 ANN":
+
+            comparison_model = "🌲 Random Forest"
+
+            comparison_prediction = rf_prediction
+
+        else:
+
+            comparison_model = "🧠 ANN"
+
+            comparison_prediction = ann_prediction
+
+
+        difference = abs(
+            prediction - comparison_prediction
+        )
+
+
+        render_html(
+            dedent(f"""
+            <div class="glass-card"
+                 style="
+                 margin-top:20px;
+                 ">
+
+                <h3>
+                    🤖 AI Model Comparison
+                </h3>
+
+                <p>
+                    <b>Selected Model:</b>
+                    {model_choice}
+                </p>
+
+                <p>
+                    <b>Selected Prediction:</b>
+                    {prediction:.1f} AQI
+                </p>
+
+                <p>
+                    <b>{comparison_model}:</b>
+                    {comparison_prediction:.1f} AQI
+                </p>
+
+                <p>
+                    <b>Prediction Difference:</b>
+                    {difference:.1f} AQI
+                </p>
+
+            </div>
+            """)
+        )
+
+
+        # ====================================================
+        # POLLUTANT CHART
+        # ====================================================
+
+        render_html(
+            '<div class="section-title">📊 Current Input Analysis</div>'
+        )
 
 
         pollutant_data = pd.DataFrame({
@@ -1288,9 +1544,8 @@ if page == "🔮 AQI Prediction":
 elif page == "📊 Data Analysis":
 
     render_html(
-        '<div class="section-title">📊 Air Quality Data Analysis</div>',
+        '<div class="section-title">📊 Air Quality Data Analysis</div>'
     )
-
 
     st.write(
         "Explore the statistical characteristics "
@@ -1306,12 +1561,10 @@ elif page == "📊 Data Analysis":
         f"{df['pm2_5'].mean():.2f}"
     )
 
-
     c2.metric(
         "Average PM10",
         f"{df['pm10'].mean():.2f}"
     )
-
 
     c3.metric(
         "Average NO₂",
@@ -1320,7 +1573,7 @@ elif page == "📊 Data Analysis":
 
 
     render_html(
-        '<div class="section-title">📋 Pollutant Statistics</div>',
+        '<div class="section-title">📋 Pollutant Statistics</div>'
     )
 
 
@@ -1340,7 +1593,7 @@ elif page == "📊 Data Analysis":
 
 
     render_html(
-        '<div class="section-title">📊 AQI Category Distribution</div>',
+        '<div class="section-title">📊 AQI Category Distribution</div>'
     )
 
 
@@ -1363,7 +1616,7 @@ elif page == "📊 Data Analysis":
 elif page == "📈 Pollution Trends":
 
     render_html(
-        '<div class="section-title">📈 Pollution Trends</div>',
+        '<div class="section-title">📈 Pollution Trends</div>'
     )
 
 
@@ -1390,7 +1643,7 @@ elif page == "📈 Pollution Trends":
 
 
     render_html(
-        '<div class="section-title">🌫️ Daily Average AQI</div>',
+        '<div class="section-title">🌫️ Daily Average AQI</div>'
     )
 
 
@@ -1415,7 +1668,7 @@ elif page == "📈 Pollution Trends":
 
 
     render_html(
-        '<div class="section-title">🏭 Pollutant Trends</div>',
+        '<div class="section-title">🏭 Pollutant Trends</div>'
     )
 
 
@@ -1431,7 +1684,7 @@ elif page == "📈 Pollution Trends":
 elif page == "🤖 Model Insights":
 
     render_html(
-        '<div class="section-title">🤖 Machine Learning Insights</div>',
+        '<div class="section-title">🤖 Machine Learning Insights</div>'
     )
 
 
@@ -1444,19 +1697,12 @@ elif page == "🤖 Model Insights":
     feature_names = [
 
         "Temperature",
-
         "Humidity",
-
         "Pressure",
-
         "Wind Speed",
-
         "PM2.5",
-
         "PM10",
-
         "CO",
-
         "NO₂"
 
     ]
@@ -1481,7 +1727,7 @@ elif page == "🤖 Model Insights":
 
 
     render_html(
-        '<div class="section-title">🎯 Feature Importance</div>',
+        '<div class="section-title">🎯 Feature Importance</div>'
     )
 
 
@@ -1523,5 +1769,5 @@ render_html(
         Machine Learning • Python • Streamlit
 
     </div>
-    """),
+    """)
 )
