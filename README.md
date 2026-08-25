@@ -398,6 +398,9 @@ If you find this project useful, consider giving the repository a ⭐ on GitHub!
 
 ---
 
+Yes 👍 Ee part lo formatting garbled ayindi. **Exactly clean Markdown format lo** idi paste cheyyi:
+
+````markdown
 ## 📜 Project Summary
 
 **Air Quality Prediction & Pollution Risk Analysis** is a Machine Learning and Deep Learning-based application designed to predict AQI values and provide an understandable analysis of pollution levels.
@@ -426,16 +429,23 @@ Pollution Risk Analysis
 Interactive Streamlit Dashboard
         ↓
 Cloud Deployment
+````
+
+The project demonstrates the practical integration of **Machine Learning and Deep Learning models** with an interactive web application for air-quality prediction and pollution-risk analysis.
 
 ---
-
 
 # 📌 Project Links
 
 **GitHub:**
+
 [https://github.com/alladaindrika3/air-quality-prediction](https://github.com/alladaindrika3/air-quality-prediction)
 
 **Live Streamlit Application:**
+
 [https://air-quality-prediction-bu2djbk25qhcstsgecauyd.streamlit.app/](https://air-quality-prediction-bu2djbk25qhcstsgecauyd.streamlit.app/)
 
 ---
+
+````
+
