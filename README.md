@@ -1,4 +1,3 @@
-Yes 👍 **idi complete final `README.md` content**. Existing `README.md` motham delete chesi **exactly idi paste cheyyi**.
 
 ````markdown
 # 🌍 Air Quality Prediction & Pollution Risk Analysis
