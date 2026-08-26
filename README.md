@@ -189,7 +189,7 @@ The dashboard provides visual representations of air-quality and AQI-related inf
 The application displays the predicted AQI value along with the corresponding result.
 
 <a href="https://github.com/alladaindrika3/air-quality-prediction/blob/main/screenshots/qi_results.png">
-<img src="https://raw.githubusercontent.com/alladaindrika3/air-quality-prediction/main/screenshots/qi_results.png" width="800">
+<img src="https://raw.githubusercontent.com/alladaindrika3/air-quality-prediction/main/screenshots/_aqi_results.png" width="800">
 </a>
 
 ---
