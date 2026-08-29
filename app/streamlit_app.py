@@ -101,8 +101,8 @@ if "prediction" not in st.session_state:
 if "category" not in st.session_state:
     st.session_state.category = None
 
-if "rf_prediction" not in st.session_state:
-    st.session_state.rf_prediction = None
+if "lr_prediction" not in st.session_state:
+    st.session_state.lr_prediction = None
 
 if "ann_prediction" not in st.session_state:
     st.session_state.ann_prediction = None
@@ -1014,7 +1014,7 @@ if page == "🔮 AQI Prediction":
 
     model_choice = st.radio(
         "🤖 Select Prediction Model",
-        ["🌲 Random Forest", "🧠 ANN"],
+        ["📈 Linear Regression", "🧠 ANN"],
         horizontal=True
     )
 
@@ -1140,10 +1140,10 @@ if page == "🔮 AQI Prediction":
 
 
         # ----------------------------------------------------
-        # RANDOM FOREST
+        # LINEAR REGRESSION
         # ----------------------------------------------------
 
-        rf_prediction = model.predict(
+        lr_prediction = model.predict(
             input_data
         )[0]
 
@@ -1166,9 +1166,9 @@ if page == "🔮 AQI Prediction":
         # LIMIT PREDICTIONS
         # ----------------------------------------------------
 
-        rf_prediction = max(
+        lr_prediction = max(
             0,
-            min(500, rf_prediction)
+            min(500, lr_prediction)
         )
 
         ann_prediction = max(
@@ -1187,7 +1187,7 @@ if page == "🔮 AQI Prediction":
 
         else:
 
-            prediction = rf_prediction
+            prediction = lr_prediction
 
 
         category = get_aqi_category(
@@ -1203,7 +1203,7 @@ if page == "🔮 AQI Prediction":
 
         st.session_state.category = category
 
-        st.session_state.rf_prediction = rf_prediction
+        st.session_state.lr_prediction = lr_prediction
 
         st.session_state.ann_prediction = ann_prediction
 
@@ -1218,7 +1218,7 @@ if page == "🔮 AQI Prediction":
 
         category = st.session_state.category
 
-        rf_prediction = st.session_state.rf_prediction
+        lr_prediction = st.session_state.lr_prediction
 
         ann_prediction = st.session_state.ann_prediction
 
@@ -1450,9 +1450,9 @@ if page == "🔮 AQI Prediction":
 
         if model_choice == "🧠 ANN":
 
-            comparison_model = "🌲 Random Forest"
+            comparison_model = "📈 Linear Regression"
 
-            comparison_prediction = rf_prediction
+            comparison_prediction = lr_prediction
 
         else:
 
@@ -1712,7 +1712,7 @@ elif page == "🤖 Model Insights":
 
         "Feature": feature_names,
 
-        "Importance": model.feature_importances_
+        "Importance": abs(model.coef_)
 
     })
 
@@ -1745,7 +1745,7 @@ elif page == "🤖 Model Insights":
 
 
     st.success(
-        "Higher feature importance indicates a stronger "
+        "Higher coefficient magnitude indicates a stronger "
         "contribution to the model's AQI prediction."
     )
 

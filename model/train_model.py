@@ -2,7 +2,7 @@ import pandas as pd
 import joblib
 
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 
@@ -13,7 +13,7 @@ print("Dataset loaded successfully!")
 print("Shape:", df.shape)
 
 
-# Features
+# Features - kept the same 8 inputs used by the Streamlit app and ANN
 features = [
     "temp_c",
     "humidity",
@@ -45,16 +45,12 @@ print("Training data:", X_train.shape)
 print("Testing data:", X_test.shape)
 
 
-# Random Forest model
-model = RandomForestRegressor(
-    n_estimators=100,
-    random_state=42,
-    n_jobs=-1
-)
+# Linear Regression model
+model = LinearRegression()
 
 
 # Train
-print("\nTraining model...")
+print("\nTraining Linear Regression model...")
 model.fit(X_train, y_train)
 
 print("Model training completed!")
@@ -66,20 +62,21 @@ y_pred = model.predict(X_test)
 
 # Evaluation
 mae = mean_absolute_error(y_test, y_pred)
-mse = mean_squared_error(y_test, y_pred)
-rmse = mse ** 0.5
+rmse = mean_squared_error(y_test, y_pred) ** 0.5
 r2 = r2_score(y_test, y_pred)
 
 
-print("\nModel Performance")
-print("-----------------------")
+print("\n====================================")
+print("LINEAR REGRESSION MODEL PERFORMANCE")
+print("====================================")
 print("MAE :", mae)
 print("RMSE:", rmse)
-print("R2 Score:", r2)
+print("R2  :", r2)
+print("====================================")
 
 
 # Save model
 joblib.dump(model, "model/aqi_model.pkl")
 
-print("\nModel saved successfully!")
+print("\nLinear Regression model saved successfully!")
 print("File: model/aqi_model.pkl")
